@@ -31,12 +31,12 @@ async function uploadData() {
   
   // Validate inputs
   if (!collectionName) {
-    alert('Please enter a collection name');
+    alert('الرجاء إدخال اسم المجموعة');
     return;
   }
   
   if (!jsonDataStr) {
-    alert('Please enter JSON data');
+    alert('الرجاء إدخال بيانات JSON');
     return;
   }
   
@@ -47,15 +47,15 @@ async function uploadData() {
     
     // Ensure data is an array
     if (!Array.isArray(jsonData)) {
-      throw new Error('Input must be a JSON array');
+      throw new Error('يجب أن تكون المدخلات مصفوفة JSON');
     }
     
     // Ensure array is not empty
     if (jsonData.length === 0) {
-      throw new Error('JSON array cannot be empty');
+      throw new Error('لا يمكن أن تكون مصفوفة JSON فارغة');
     }
   } catch (error) {
-    alert('Invalid JSON format: ' + error.message);
+    alert('تنسيق JSON غير صالح: ' + error.message);
     return;
   }
   
@@ -80,18 +80,35 @@ async function uploadData() {
       const chunk = jsonData.slice(i, i + 500);
       
       for (const item of chunk) {
-        // Use custom ID if provided, otherwise let Firestore generate one
-        let docRef;
+        // Find the ID field regardless of casing or whitespace
+        let idField = Object.keys(item).find(key => 
+          key.toLowerCase().trim() === 'id' || 
+          key.trim() === ' id' || 
+          key.trim() === 'id '
+        );
         
-        if (item.id) {
-          docRef = db.collection(collectionName).doc(item.id.toString());
+        let docRef;
+        let docData = {...item}; // Create a copy of the item
+        
+        if (idField) {
+          // Use the found ID field value as the document ID
+          const idValue = item[idField].toString().trim();
+          docRef = db.collection(collectionName).doc(idValue);
+          
+          // Add a standardized 'id' field to the document if it doesn't exist
+          if (idField !== 'id') {
+            docData.id = idValue;
+          }
         } else {
+          // No ID field found, let Firestore generate an ID
           docRef = db.collection(collectionName).doc();
+          // Add the generated ID to the document data
+          docData.id = docRef.id;
         }
         
-        batch.set(docRef, item);
+        batch.set(docRef, docData);
         processedCount++;
-        statusCount.textContent = `Processing: ${processedCount}/${totalRecords}`;
+        statusCount.textContent = `جاري المعالجة: ${processedCount}/${totalRecords}`;
       }
       
       // Commit the batch
@@ -100,12 +117,12 @@ async function uploadData() {
     }
     
     // Show success message
-    successMessage.textContent = `Success! ${successCount} records uploaded to collection "${collectionName}".`;
+    successMessage.textContent = `تم بنجاح! تم رفع ${successCount} سجل إلى المجموعة "${collectionName}".`;
     successMessage.style.display = 'block';
     
   } catch (error) {
     // Show error message
-    errorMessage.textContent = 'Error uploading data: ' + error.message;
+    errorMessage.textContent = 'خطأ في رفع البيانات: ' + error.message;
     errorMessage.style.display = 'block';
     console.error('Upload error:', error);
   } finally {
@@ -117,19 +134,19 @@ async function uploadData() {
 
 // Add example data to help users
 document.addEventListener('DOMContentLoaded', () => {
-  jsonDataTextarea.placeholder = `Paste your JSON array here...
+  jsonDataTextarea.placeholder = `الصق مصفوفة JSON هنا...
 
-Example format:
+مثال على التنسيق:
 [
   {
     "id": "001",
-    "name": "John Doe",
-    "email": "john@example.com"
+    "Name": "محمد أحمد",
+    "Status": "تم الاستلام"
   },
   {
     "id": "002",
-    "name": "Jane Smith",
-    "email": "jane@example.com"
+    "Name": "سارة محمد",
+    "Status": "لم يتم الاستلام"
   }
 ]`;
 });
