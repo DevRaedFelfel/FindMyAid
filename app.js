@@ -131,3 +131,45 @@ function displayResult(data) {
   // Show the result container
   resultContainer.style.display = 'block';
 }
+
+// NEW FUNCTION: List all collections and their records
+function listAllCollectionsAndRecords() {
+  console.log('Listing all Firestore collections:');
+  
+  // Get collection references
+  db.listCollections()
+    .then(collections => {
+      console.log(`Found ${collections.length} collections:`);
+      
+      // Log the names of all collections
+      collections.forEach(collection => {
+        const collectionName = collection.id;
+        console.log(`Collection: ${collectionName}`);
+        
+        // For each collection, get all documents
+        db.collection(collectionName).get()
+          .then(querySnapshot => {
+            console.log(`Found ${querySnapshot.size} documents in ${collectionName}:`);
+            
+            // Log each document in the collection
+            querySnapshot.forEach(doc => {
+              console.log(`Document ID: ${doc.id}`);
+              console.log('Document data:', doc.data());
+              console.log('-----------------------');
+            });
+          })
+          .catch(error => {
+            console.error(`Error getting documents from ${collectionName}:`, error);
+          });
+      });
+    })
+    .catch(error => {
+      console.error('Error listing collections:', error);
+    });
+}
+
+// Call the function to list all collections and records when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Initializing Firestore collection and document listing...');
+  listAllCollectionsAndRecords();
+});
