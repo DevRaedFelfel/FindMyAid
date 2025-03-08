@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Data</title>
+    <title>رفع البيانات</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
@@ -40,6 +40,7 @@
             border-radius: 4px;
             box-sizing: border-box;
             font-family: monospace;
+            direction: ltr; /* Keep JSON in left-to-right format */
         }
         button {
             padding: 10px 20px;
@@ -56,7 +57,7 @@
             margin-bottom: 20px;
         }
         .nav-links a {
-            margin-right: 15px;
+            margin-left: 15px;
             color: #4285f4;
             text-decoration: none;
         }
@@ -100,34 +101,34 @@
     </style>
 </head>
 <body>
-    <h1>Data Upload</h1>
+    <h1>رفع البيانات</h1>
     
     <div class="nav-links">
-        <a href="index.html">Back to Search</a>
+        <a href="index.html">العودة إلى صفحة البحث</a>
     </div>
     
     <div class="upload-container">
-        <h2>Upload JSON Data to Firebase</h2>
+        <h2>رفع بيانات JSON إلى Firebase</h2>
         
         <div class="form-group">
-            <label for="collectionName">Collection Name:</label>
-            <input type="text" id="collectionName" placeholder="Enter collection name...">
+            <label for="collectionName">اسم المجموعة:</label>
+            <input type="text" id="collectionName" placeholder="أدخل اسم المجموعة...">
         </div>
         
         <div class="form-group">
-            <label for="jsonData">JSON Array:</label>
-            <textarea id="jsonData" placeholder="Paste your JSON array here..."></textarea>
+            <label for="jsonData">مصفوفة JSON:</label>
+            <textarea id="jsonData" placeholder="الصق مصفوفة JSON هنا..."></textarea>
         </div>
         
-        <button id="uploadButton">Upload Data</button>
+        <button id="uploadButton">رفع البيانات</button>
         <div class="loader" id="loader"></div>
         
         <div class="success-message" id="successMessage">
-            Data successfully uploaded to Firebase!
+            تم رفع البيانات بنجاح إلى Firebase!
         </div>
         
         <div class="error-message" id="errorMessage">
-            Error uploading data. Please check your input and try again.
+            حدث خطأ أثناء رفع البيانات. يرجى التحقق من المدخلات والمحاولة مرة أخرى.
         </div>
         
         <div class="status-count" id="statusCount"></div>
