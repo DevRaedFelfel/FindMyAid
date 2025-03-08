@@ -35,7 +35,7 @@ function searchRecord() {
   const id = searchInput.value.trim();
   
   if (id === '') {
-    alert('Please enter an ID');
+    alert('الرجاء إدخال الرقم التعريفي');
     return;
   }
   
@@ -55,28 +55,52 @@ function searchRecord() {
         const data = doc.data();
         displayResult(data);
       } else {
-        // Show error message
-        errorMessage.style.display = 'block';
-        
-        // Let's try querying by where clause to see if the ID exists as a field
-        db.collection('SampleList').where('id', '==', id).get()
-          .then((querySnapshot) => {
-            if (!querySnapshot.empty) {
-              const doc = querySnapshot.docs[0];
-              const data = doc.data();
-              displayResult(data);
-              errorMessage.style.display = 'none';
-            }
-          })
-          .catch(error => {
-            // Error handling silently
-          });
+        // If document not found by ID, try different field queries
+        searchByFields(id);
       }
     })
     .catch((error) => {
       // Hide loader, show error
       loader.style.display = 'none';
-      alert('An error occurred while searching. Please try again.');
+      alert('حدث خطأ أثناء البحث. الرجاء المحاولة مرة أخرى.');
+      console.error("Search error:", error);
+    });
+}
+
+// Function to search by various ID fields
+function searchByFields(searchValue) {
+  // Try all possible variations of ID fields
+  const queries = [
+    db.collection('SampleList').where('id', '==', searchValue).get(),
+    db.collection('SampleList').where(' id', '==', searchValue).get(),
+    db.collection('SampleList').where('ID', '==', searchValue).get(),
+    db.collection('SampleList').where('Id', '==', searchValue).get()
+  ];
+  
+  Promise.all(queries.map(p => p.catch(e => null)))
+    .then(results => {
+      // Process all query results
+      let found = false;
+      
+      for (const querySnapshot of results) {
+        if (querySnapshot && !querySnapshot.empty) {
+          // Display the first matching record
+          const doc = querySnapshot.docs[0];
+          const data = doc.data();
+          displayResult(data);
+          found = true;
+          break;
+        }
+      }
+      
+      if (!found) {
+        // If still not found, show error message
+        errorMessage.style.display = 'block';
+      }
+    })
+    .catch(error => {
+      console.error("Field search error:", error);
+      errorMessage.style.display = 'block';
     });
 }
 
@@ -90,13 +114,32 @@ function displayResult(data) {
   table.style.width = '100%';
   table.style.borderCollapse = 'collapse';
   
+  // Translation mapping for common field names
+  const translations = {
+    'id': 'الرقم التعريفي',
+    'name': 'الاسم',
+    'status': 'الحالة',
+    'email': 'البريد الإلكتروني'
+  };
+  
   // Loop through all properties in the data object
   for (const [key, value] of Object.entries(data)) {
+    // Skip the ID field with a space if it exists
+    if (key.trim() === ' id' && data.id) continue;
+    
     const row = table.insertRow();
     
     // Create cells for property name and value
     const keyCell = row.insertCell(0);
-    keyCell.textContent = key.charAt(0).toUpperCase() + key.slice(1); // Capitalize first letter
+    const keyLower = key.toLowerCase().trim();
+    
+    // Use translation if available, otherwise use the original key
+    if (translations[keyLower]) {
+      keyCell.textContent = translations[keyLower];
+    } else {
+      keyCell.textContent = key.charAt(0).toUpperCase() + key.slice(1).trim();
+    }
+    
     keyCell.style.padding = '8px';
     keyCell.style.borderBottom = '1px solid #ddd';
     keyCell.style.fontWeight = 'bold';
