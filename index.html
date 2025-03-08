@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Record Search</title>
+    <title>بحث السجلات</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
@@ -56,23 +56,38 @@
             color: red;
             display: none;
         }
+        .nav-links {
+            margin-bottom: 20px;
+        }
+        .nav-links a {
+            margin-left: 15px;
+            color: #4285f4;
+            text-decoration: none;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-    <h1>Record Search</h1>
+    <h1>بحث السجلات</h1>
+    
+    <div class="nav-links">
+        <a href="upload.html">رفع البيانات</a>
+    </div>
     
     <div class="search-container">
-        <h2>Search by ID</h2>
-        <input type="text" id="searchInput" placeholder="Enter ID...">
-        <button id="searchButton">Search</button>
+        <h2>البحث بواسطة الرقم التعريفي</h2>
+        <input type="text" id="searchInput" placeholder="أدخل الرقم التعريفي...">
+        <button id="searchButton">بحث</button>
         <div class="loader" id="loader"></div>
-        <p class="error-message" id="errorMessage">Record not found. Please try a different ID.</p>
+        <p class="error-message" id="errorMessage">لم يتم العثور على السجل. الرجاء المحاولة برقم تعريفي آخر.</p>
     </div>
     
     <div class="result-container" id="resultContainer">
-        <h2>Search Result</h2>
+        <h2>نتيجة البحث</h2>
         <div id="resultContent">
-            <!-- Results will be displayed here -->
+            <!-- سيتم عرض النتائج هنا -->
         </div>
     </div>
 
