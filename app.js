@@ -50,7 +50,7 @@ function searchRecord() {
   errorMessage.style.display = 'none';
   
   // Query Firestore for the ID
-  db.collection('records').doc(id).get()
+  db.collection('SampleList').doc(id).get()
     .then((doc) => {
       // Hide loader
       loader.style.display = 'none';
@@ -68,7 +68,7 @@ function searchRecord() {
         
         // Let's try querying by where clause to see if the ID exists as a field
         console.log('Trying alternative search method...');
-        db.collection('records').where('id', '==', id).get()
+        db.collection('SampleList').where('id', '==', id).get()
           .then((querySnapshot) => {
             if (!querySnapshot.empty) {
               console.log('Found via field search!');
