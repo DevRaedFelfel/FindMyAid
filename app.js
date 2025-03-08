@@ -12,9 +12,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Enable console logs for Firestore
-firebase.firestore.setLogLevel('debug');
-
 // DOM elements
 const searchInput = document.getElementById('searchInput');
 const searchButton = document.getElementById('searchButton');
@@ -42,8 +39,6 @@ function searchRecord() {
     return;
   }
   
-  console.log('Searching for record with ID:', id);
-  
   // Show loader, hide previous results and error messages
   loader.style.display = 'block';
   resultContainer.style.display = 'none';
@@ -55,44 +50,32 @@ function searchRecord() {
       // Hide loader
       loader.style.display = 'none';
       
-      console.log('Query returned document:', doc.exists ? 'exists' : 'does not exist');
-      
       if (doc.exists) {
         // Display the result
         const data = doc.data();
-        console.log('Document data:', data);
         displayResult(data);
       } else {
         // Show error message
         errorMessage.style.display = 'block';
         
         // Let's try querying by where clause to see if the ID exists as a field
-        console.log('Trying alternative search method...');
         db.collection('SampleList').where('id', '==', id).get()
           .then((querySnapshot) => {
             if (!querySnapshot.empty) {
-              console.log('Found via field search!');
               const doc = querySnapshot.docs[0];
               const data = doc.data();
-              console.log('Document data:', data);
               displayResult(data);
               errorMessage.style.display = 'none';
-              
-              // Show the correct method to use
-              console.log('Note: Your ID is stored as a field, not as the document ID');
-            } else {
-              console.log('No results found via field search either');
             }
           })
           .catch(error => {
-            console.error('Error with field search:', error);
+            // Error handling silently
           });
       }
     })
     .catch((error) => {
       // Hide loader, show error
       loader.style.display = 'none';
-      console.error('Error searching for record:', error);
       alert('An error occurred while searching. Please try again.');
     });
 }
@@ -131,45 +114,3 @@ function displayResult(data) {
   // Show the result container
   resultContainer.style.display = 'block';
 }
-
-// NEW FUNCTION: List all collections and their records
-function listAllCollectionsAndRecords() {
-  console.log('Listing all Firestore collections:');
-  
-  // Get collection references
-  db.listCollections()
-    .then(collections => {
-      console.log(`Found ${collections.length} collections:`);
-      
-      // Log the names of all collections
-      collections.forEach(collection => {
-        const collectionName = collection.id;
-        console.log(`Collection: ${collectionName}`);
-        
-        // For each collection, get all documents
-        db.collection(collectionName).get()
-          .then(querySnapshot => {
-            console.log(`Found ${querySnapshot.size} documents in ${collectionName}:`);
-            
-            // Log each document in the collection
-            querySnapshot.forEach(doc => {
-              console.log(`Document ID: ${doc.id}`);
-              console.log('Document data:', doc.data());
-              console.log('-----------------------');
-            });
-          })
-          .catch(error => {
-            console.error(`Error getting documents from ${collectionName}:`, error);
-          });
-      });
-    })
-    .catch(error => {
-      console.error('Error listing collections:', error);
-    });
-}
-
-// Call the function to list all collections and records when the page loads
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Initializing Firestore collection and document listing...');
-  listAllCollectionsAndRecords();
-});
