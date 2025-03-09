@@ -1,4 +1,4 @@
-// Using the same Firebase configuration from app.js
+// Firebase configuration - Same as other files for consistency
 const firebaseConfig = {
   apiKey: "AIzaSyDGCfXQLUTaOY9o58pIiDxrNnl8yY6M-gU",
   authDomain: "findmyaid.firebaseapp.com",
@@ -11,8 +11,19 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
-// DOM elements
+// DOM elements - Authentication
+const authContainer = document.getElementById('authContainer');
+const uploadContainer = document.getElementById('uploadContainer');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const loginButton = document.getElementById('loginButton');
+const logoutButton = document.getElementById('logoutButton');
+const loginError = document.getElementById('loginError');
+const userInfo = document.getElementById('userInfo');
+
+// DOM elements - Upload
 const collectionNameInput = document.getElementById('collectionName');
 const jsonDataTextarea = document.getElementById('jsonData');
 const uploadButton = document.getElementById('uploadButton');
@@ -21,10 +32,108 @@ const successMessage = document.getElementById('successMessage');
 const errorMessage = document.getElementById('errorMessage');
 const statusCount = document.getElementById('statusCount');
 
-// Add event listener to the upload button
-uploadButton.addEventListener('click', uploadData);
+// Authentication state observer
+auth.onAuthStateChanged(function(user) {
+  if (user) {
+    // User is signed in
+    showUploadInterface(user);
+  } else {
+    // User is signed out
+    showLoginInterface();
+  }
+});
 
-async function uploadData() {
+// Show login interface
+function showLoginInterface() {
+  authContainer.style.display = 'block';
+  uploadContainer.style.display = 'none';
+  emailInput.value = '';
+  passwordInput.value = '';
+  loginError.style.display = 'none';
+}
+
+// Show upload interface
+function showUploadInterface(user) {
+  authContainer.style.display = 'none';
+  uploadContainer.style.display = 'block';
+  userInfo.textContent = `مسجل الدخول كـ: ${user.email}`;
+  
+  // Reset upload form
+  collectionNameInput.value = '';
+  jsonDataTextarea.value = '';
+  successMessage.style.display = 'none';
+  errorMessage.style.display = 'none';
+  statusCount.textContent = '';
+}
+
+// Login event
+loginButton.addEventListener('click', function() {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+  
+  if (!email || !password) {
+    loginError.textContent = 'الرجاء إدخال البريد الإلكتروني وكلمة المرور';
+    loginError.style.display = 'block';
+    return;
+  }
+  
+  auth.signInWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      // Signed in successfully
+      loginError.style.display = 'none';
+      
+      // Check if this user is in the admins collection
+      db.collection('admins').doc(userCredential.user.uid).get()
+        .then((doc) => {
+          if (!doc.exists) {
+            // Not an admin, sign them out
+            auth.signOut();
+            loginError.textContent = 'ليس لديك صلاحيات المسؤول للوصول إلى هذه الصفحة';
+            loginError.style.display = 'block';
+          }
+        })
+        .catch((error) => {
+          console.error('Admin check error:', error);
+          auth.signOut();
+          loginError.textContent = 'حدث خطأ أثناء التحقق من صلاحيات المسؤول';
+          loginError.style.display = 'block';
+        });
+    })
+    .catch((error) => {
+      // Handle errors
+      let errorMessage = 'فشل تسجيل الدخول';
+      
+      if (error.code === 'auth/invalid-email') {
+        errorMessage = 'البريد الإلكتروني غير صالح';
+      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'تم تعطيل الحساب مؤقتًا بسبب محاولات تسجيل دخول متكررة. حاول مرة أخرى لاحقًا';
+      }
+      
+      loginError.textContent = errorMessage;
+      loginError.style.display = 'block';
+      console.error('Login error:', error);
+    });
+});
+
+// Logout event
+logoutButton.addEventListener('click', function() {
+  auth.signOut().catch((error) => {
+    console.error('Logout error:', error);
+  });
+});
+
+// Upload event
+uploadButton.addEventListener('click', async function() {
+  // Check if user is authenticated
+  const user = auth.currentUser;
+  if (!user) {
+    alert('يجب أن تكون مسجل الدخول لرفع البيانات');
+    showLoginInterface();
+    return;
+  }
+  
   // Get input values
   const collectionName = collectionNameInput.value.trim();
   const jsonDataStr = jsonDataTextarea.value.trim();
@@ -69,6 +178,12 @@ async function uploadData() {
   uploadButton.disabled = true;
   
   try {
+    // Add metadata about who uploaded the data
+    const metadata = {
+      uploadedBy: user.email,
+      uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
     // Batch write to Firestore for better performance
     const totalRecords = jsonData.length;
     let processedCount = 0;
@@ -88,7 +203,7 @@ async function uploadData() {
         );
         
         let docRef;
-        let docData = {...item}; // Create a copy of the item
+        let docData = {...item, ...metadata}; // Add metadata to each document
         
         if (idField) {
           // Use the found ID field value as the document ID
@@ -130,7 +245,7 @@ async function uploadData() {
     loader.style.display = 'none';
     uploadButton.disabled = false;
   }
-}
+});
 
 // Add example data to help users
 document.addEventListener('DOMContentLoaded', () => {
